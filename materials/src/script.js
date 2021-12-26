@@ -1,15 +1,18 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-
+import * as dat from 'dat.gui'
 /**
- * Base
+ * Material
  */
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+
+//dat.gui add
+const gui = new dat.GUI()
 
 /**
  * Sizes
@@ -36,7 +39,9 @@ window.addEventListener('resize', () =>
 
 //texture loader
 const TextureLoaderManager = new THREE.LoadingManager()
+const  cubetextureLoader= new THREE.CubeTextureLoader()
 const textureLoader = new THREE.TextureLoader()
+
 const doorColorTExture = textureLoader.load('./textures/door/color.jpg')
 const alphaColorTExture = textureLoader.load('./textures/door/alpha.jpg')
 const ambientOcclusionColorTExture = textureLoader.load('./textures/door/ambientOcclusion.jpg')
@@ -44,9 +49,17 @@ const heightColorTExture = textureLoader.load('./textures/door/height.jpg')
 const normalColorTExture = textureLoader.load('./textures/door/normal.jpg')
 const metalnessColorTExture = textureLoader.load('./textures/door/metalness.jpg')
 const roughnessColorTExture = textureLoader.load('./textures/door/roughness.jpg')
-const matcapTextures = textureLoader.load('./textures/matcaps/1.png')
+const matcapTextures = textureLoader.load('./textures/matcaps/9.jpg')
 const gradientTextures = textureLoader.load('./textures/gradients/3.jpg')
 
+// const environmentMapTexture = cubeTextureLoader.load([
+//     './textures/environmentMaps/0/px.jpg',
+//     './textures/environmentMaps/0/nx.jpg',
+//     './textures/environmentMaps/0/py.jpg',
+//     './textures/environmentMaps/0/ny.jpg',
+//     './textures/environmentMaps/0/pz.jpg',
+//     './textures/environmentMaps/0/nz.jpg'
+// ])
 
 
 //object
@@ -75,14 +88,45 @@ const gradientTextures = textureLoader.load('./textures/gradients/3.jpg')
 // const material = new THREE.MeshLambertMaterial()
 
 //mesh phong materail very important
-const material = new THREE.MeshPhongMaterial()
-material.shininess = 100
-material.specular = new THREE.Color(0xffff00)
+// const material = new THREE.MeshPhongMaterial()
+// material.shininess = 100
+// material.specular = new THREE.Color(0xffff00)
+
+// gradientTextures.minFilter =  THREE.NearestFilter
+// gradientTextures.magFilter =  THREE.NearestFilter
 
 //mesh toon material
+// const material = new THREE.MeshToonMaterial()
+// material.gradientMap = gradientTextures
+
+//mesh standert material ****
+
+// const material = new THREE.MeshStandardMaterial()
+// // material.metalness = 0.45
+// // material.roughness = 0.65
+// material.map = doorColorTExture 
+// material.aoMap = ambientOcclusionColorTExture
+// material.aoMapIntensity = 1
+// material.displacementMap = heightColorTExture
+// material.displacementScale = 0.1
+// material.metalnessMap = metalnessColorTExture
+// material.roughnessMap = roughnessColorTExture
+// material.normalMap = normalColorTExture
+// material.normalScale.set(0.5,0.5)
+// material.transparent = true
+// material.alphaMap = alphaColorTExture
 
 
 
+const material = new THREE.MeshStandardMaterial()
+material.metalness = 0.7
+material.roughness = 0.2
+//material.envMap = envmap
+
+gui.add(material,'metalness').min(0).max(1).step(0.0001)
+gui.add(material,'roughness').min(0).max(1).step(0.001)
+gui.add(material,'aoMapIntensity').min(1).max(10).step(0.001)
+gui.add(material,'displacementScale').min(0).max(1).step(0.001)
 
 
 //light
@@ -98,22 +142,38 @@ scene.add(pointLight)
 
 
 const sphere = new THREE.Mesh(
-    new THREE.SphereBufferGeometry(0.5,16,16),material
+    new THREE.SphereBufferGeometry(0.5,64,64),material
 )
 sphere.position.x = - 1.5
-scene.add(sphere)
+
 
 const plane = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(1,1),material
+    new THREE.PlaneBufferGeometry(1,1,100,100),material
 )
-scene.add(plane)
+
 
 const torus = new THREE.Mesh(
-    new THREE.TorusBufferGeometry(0.3,0.2,16,32),
+    new THREE.TorusBufferGeometry(0.3,0.2,64,128),
     material
 )
 torus.position.x += 1.5
-scene.add(torus)
+
+//set geomerty to uv very impoortant***
+sphere.geometry.setAttribute(
+    'uv2',
+    new THREE.BufferAttribute(sphere.geometry.attributes.uv.array,2)
+)
+plane.geometry.setAttribute(
+    'uv2',
+    new THREE.BufferAttribute(plane.geometry.attributes.uv.array,2)
+)
+torus.geometry.setAttribute(
+    'uv2',
+    new THREE.BufferAttribute(torus.geometry.attributes.uv.array,2)
+)
+
+
+scene.add(torus,sphere,plane)
 
 
 
@@ -172,5 +232,8 @@ const tick = () =>
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }
+
+
+
 
 tick()
